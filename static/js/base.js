@@ -8,6 +8,11 @@ if(regForm){
         const formData=new FormData(form);
         const data=Object.fromEntries(formData.entries());
 
+        if(data.password !== data.password2){
+            alert('passwords do not match!')
+            return
+        }
+
         payload={
          username:data.username,
          email:data.email,

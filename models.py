@@ -1,18 +1,18 @@
-from sqlalchemy import Column,Integer,String,ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from database import Base, engine
 
 
 class Users(Base):
     __tablename__='users'
     id=Column(Integer, primary_key=True, index=True)
-    username=Column(String, primary_key=True)
+    username=Column(String,unique=True)
     hashed_password=Column(String)
-    email=Column(String)
+    email=Column(String,unique=True)
     first_name=Column(String)
     last_name=Column(String)
     phone_number=Column(String)
     role=Column(String)
-
+    is_active=Column(Boolean)
 
 class Books(Base):
     __tablename__='books'

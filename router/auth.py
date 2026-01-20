@@ -75,4 +75,5 @@ async def register_user(request:Request,regdata:RegisterForm,db:db_dependency):
                      )
     db.add(user_model)
     db.commit()
+    print('pushed user to db.users..')
     return False
