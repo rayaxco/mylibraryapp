@@ -65,8 +65,9 @@ if(loginForm){
         //const response=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         const response=await fetch('/auth/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(loginPayload)});
         if(response.ok){
+            console.log('login response ok')
             const data=await response.json();
-            logout();
+            deleteAllCookies();
             document.cookie=`access_token=${data.access_token}; path=/`;
 //            console.log(data.access_token);
             window.location.href='/lib/home';
@@ -83,6 +84,45 @@ if(loginForm){
     });
 }
 
+var adminButton=document.getElementById('admin-action');
+if(adminButton){
+    adminButton.addEventListener('click', async function(event){
+        event.preventDefault();
+
+        console.log('admin action button pressed')
+        console.log('redirecting to admin actions'); // Clear the form
+        window.location.href='/lib/admin-actions';
+
+    });
+}
+
+var adminButton=document.getElementById('admin-action');
+if(adminButton){
+    adminButton.addEventListener('click', async function(event){
+        event.preventDefault();
+        console.log('admin action button pressed')
+
+        try {
+                    console.log('redirecting to admin actions'); // Clear the form
+                    window.location.href='/lib/admin-actions';
+                }
+        catch(error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+        }
+    });
+}
+
+
+var logoutButton=document.getElementById('logoutButton');
+if(logoutButton){
+    logoutButton.addEventListener('click', async function(event){
+        console.log('Logout button pressed');
+        logout();
+    });
+}
+
+
 function logout(){
     const cookies = document.cookie.split(";");
 
@@ -96,5 +136,19 @@ function logout(){
         }
 
         // Redirect to the login page
-        window.location.href = '/auth/login-page';
+        window.location.href = '/auth/login';
+}
+
+function deleteAllCookies(){
+    const cookies = document.cookie.split(";");
+
+        // Iterate through all cookies and delete each one
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i];
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1  ?  cookie.substr(0, eqPos) : cookie;
+            // Set the cookie's expiry date to a past date to delete it
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        }
+
 }

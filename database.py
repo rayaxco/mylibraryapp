@@ -8,4 +8,3 @@ engine=create_engine(SQL_ALCHEMY_URL,connect_args={'check_same_thread':False},po
 SessionLocal=sessionmaker(autocommit=False,autoflush=False,bind=engine)
 
 Base =declarative_base()
-

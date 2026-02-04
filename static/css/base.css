@@ -1,0 +1,33 @@
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));  /* responsive magic */
+  gap: 1.5rem;           /* space between cards */
+  padding: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;        /* center on wide screens */
+}
+.book {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));   /* ← magic line */
+  gap: 1.5rem;           /* space between cards */
+  padding: 1rem;
+  max-width: 235px;     /* optional: prevent ultra-wide on big screens */
+  margin: 0 auto;        /* center the grid */
+}
+
+/* Basic card styling – adjust to your taste */
+.book {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.book:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}

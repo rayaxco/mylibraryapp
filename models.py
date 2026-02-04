@@ -22,6 +22,7 @@ class Books(Base):
     price=Column(Integer)
     genre=Column(String)
     summary=Column(String)
+    image_url=Column(String)
     uploader_id=Column(Integer,ForeignKey('users.id'))
 
 class Cart(Base):

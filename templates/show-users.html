@@ -1,0 +1,44 @@
+{%include 'layout.html'%}
+
+<h1>hi! {{user.username}}</h1>
+<div class="logout-button">
+    <button type="button" id="logoutButton">Logout</button>
+</div>
+
+<div class="container">
+  <table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Username</th>
+      <th>E-mail</th>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Phone Number</th>
+      <th>Role</th>
+      <th>Is Active</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for usere in all_users %}
+    <tr>
+      <td style="text-align: center;">{{usere.id}}</td>
+      <td style="text-align: center;">{{usere.username}}</td>
+      <td style="text-align: center;">{{usere.email}}</td>
+      <td style="text-align: center;">{{usere.first_name}}</td>
+      <td style="text-align: center;">{{usere.last_name}}</td>
+      <td style="text-align: center;">{{usere.phone_number}}</td>
+      <td style="text-align: center;">{{usere.role}}</td>
+      {%if usere.is_active==True%}
+        <td style="background-color : green; text-align: center;">{{usere.is_active}}</td>
+      {%elif usere.is_active==False%}
+        <td style="background-color : red; text-align: center;">{{usere.is_active}}</td>
+      {%else%}
+        <td style="text-align: center;">No Info</td>
+      {%endif%}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+</div>

@@ -1,10 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% include 'layout.html' %}
+<h1>hi! {{user.username}}</h1>
+<div class="logout-button">
+    <button type="button" id="logoutButton">Logout</button>
+</div>
+<div class="role-action">
+  {% if user.role== 'admin'%}
+    <button type="button" id="admin-action">Administrative Actions</button>
+  {% elif user.role== 'seller'%}
+    <button type="button" id="seller-action">Seller Actions</button>
+  {% elif user.role== 'customer'%}
+    <button type="button" id="cart"> View Cart</button>
+  {% endif %}
+</div>
+<div class="container">
+  {% for book in books %}
+  <div class="book">
+    <div class="book-image">
+      <img src="{{url_for('static',path='/images/'+book.image_url)}}">
+    </div>
+    <div class="book-detail">
+      <div class="book-name">
+        <h1>{{book.bookname}}</h1>
+      </div>
+      <div class="book-author">
+         <label>{{book.author}}</label>
+      </div>
+      <div class="book-genre">
+        <label>{{book.genre}}</label>
+      </div>
+      <div class="book-price">
+        <label>{{book.price}}</label>
+      </div>
+    </div>
+    <button type="button" name="add-to-cart" >Add to cart</button>
+  </div>
+  {% endfor %}
 
-</body>
-</html>
+</div>
