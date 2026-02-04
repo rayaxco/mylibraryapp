@@ -105,15 +105,26 @@ async def show_all_books(request:Request,db:db_dependency):
         if user.get('role') == 'admin':
             # all_users=db.query(Users.id,Users.username,Users.email,Users.first_name,Users.last_name,Users.phone_number,Users.role,Users.is_active).all()
             all_books=db.query(Books).all()
-            print('all ok')
-            return templates.TemplateResponse('show-books.html',{'request':request,'user':user,'all_books':all_books})
+            uploaders=[]
+            for book in all_books:
+                usern=db.query(Users.username).filter(Users.id==book.uploader_id).scalar()
+                print('all ok')
+                print(usern)
+                uploaders.append(usern)
+            return templates.TemplateResponse('show-books.html',{'request':request,'user':user,'all_books':all_books,'uploaded_by':uploaders})
         return redirect_to_home()
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail='Could not verify')
 
-#@router.get('/add-book')
-
-
+@router.get('/add-book')
+async def add_a_book_page(request:Request):
+    try:
+        user = get_current_user(request.cookies.get('access_token'))
+        if user is None:
+            return redirect_to_login()
+        return templates.TemplateResponse('')
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Could not verify')
 
 
 
