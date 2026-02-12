@@ -1,0 +1,23 @@
+{% include 'layout.html' %}
+<div class="container">
+  <form id="addBookForm">
+    <label>Book Name:</label>
+    <input type="text" name="bookname" required><br>
+
+    <label>Author:</label>
+    <input type="text" name="author" required><br>
+
+    <label>Genre:</label>
+    <input type="text" name="genre" required><br>
+
+    <label>Price:</label>
+    <input type="number" name="price" step="1" pattern="\\d*" required><br>
+
+    <label>Summary:</label>
+    <input type="text" name="summary" required><br><br>
+      <label>Image to Upload</label>
+    <input type="file" name="bookimage" id="bookImage" accept="image/*"><br><br>
+
+    <button type="submit">Register</button><br>
+  </form>
+</div>

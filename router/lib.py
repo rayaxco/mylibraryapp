@@ -1,7 +1,8 @@
+import os
 from tokenize import cookie_re
 from typing import Annotated
 
-from fastapi import Request,APIRouter,status,HTTPException
+from fastapi import Request,APIRouter,status,HTTPException,Form,UploadFile,File
 from fastapi.params import Depends
 from fastapi.responses import RedirectResponse
 from passlib.context import CryptContext
@@ -14,6 +15,10 @@ from models import Users
 from fastapi.templating import Jinja2Templates
 from router.auth import get_current_user
 from models import Books
+from PIL import Image
+from pathlib import Path
+import io
+import base64
 
 def get_db():
     db=SessionLocal()
@@ -37,6 +42,9 @@ def redirect_to_login():
 def redirect_to_home():
     redirect_response=RedirectResponse(url='/lib/home',status_code=status.HTTP_307_TEMPORARY_REDIRECT)
     return redirect_response
+def redirect_to_show_books():
+    redirect_response=RedirectResponse(url='/lib/show-books',status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+    return redirect_response
 
 # ---------------------------------------------------------PAGES------------------------------------------------
 
@@ -55,15 +63,15 @@ async def home_page(request:Request,db:db_dependency):
     books_raw=db.query(Books).all()
     books=[]
     for book in books_raw:
-        combined_bookname_author=str(book.bookname+book.author+'.png')
-        image_link=combined_bookname_author.replace(" ","")
+        # combined_bookname_author=str(book.bookname+book.author+'.png')
+        # image_link=combined_bookname_author.replace(" ","")
         books.append({'id':book.id,
                       'bookname':book.bookname,
                       'author':book.author,
                       'price':book.price,
                       'genre':book.genre,
                       'summary':book.summary,
-                      'image_url':image_link})
+                      'image_url':book.image_url})
 
     return templates.TemplateResponse('home.html',{'request':request,'user':user,'books':books})
 
@@ -116,15 +124,43 @@ async def show_all_books(request:Request,db:db_dependency):
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail='Could not verify')
 
-@router.get('/add-book')
+@router.get('/add-book-page')
 async def add_a_book_page(request:Request):
     try:
         user = get_current_user(request.cookies.get('access_token'))
         if user is None:
             return redirect_to_login()
-        return templates.TemplateResponse('')
+        return templates.TemplateResponse('add-book.html',{'request':request})
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Could not verify')
+
+# class AddBookForm(BaseModel):
+#     bookname:str
+#     author:str
+#     price:int
+#     genre:str
+#     summary:str
+@router.post('/add-book')
+async def add_a_book(bookname:Annotated[str,Form(...)],
+                     author:Annotated[str,Form(...)],
+                     genre:Annotated[str,Form(...)],
+                     summary:Annotated[str,Form(...)],
+                     price:Annotated[int,Form(...)],
+                     bookimage:UploadFile=File(...),
+                     request:Request=None,
+                     db:db_dependency=None):
+    if not bookimage.content_type.startswith('image/'):
+        raise HTTPException(400,detail='File must be an image')
+    image_url= await write_image_to_path(bookname,author,bookimage)
+    print(image_url)
+
+    user=get_current_user(request.cookies.get('access_token'))
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='No such user..')
+
+    book_model=Books(bookname=bookname,author=author,genre=genre,summary=summary,price=price,image_url=image_url,uploader_id=user.get('id'))
+    db.add(book_model)
+    db.commit()
 
 
 
@@ -135,6 +171,38 @@ async def add_a_book_page(request:Request):
 
 # ---------------------------------------------------------FUNCTIONS-------------------------------------------------||
 
+async def write_image_to_path(bookname:str,author:str,uploadimage:UploadFile):
+    folder='static/images/'
+    book=bytes((bookname+author).replace(" ",''),'utf-8')
+
+    filename=str(base64.urlsafe_b64encode(book).decode('ascii').rstrip('='))
+    path=Path(folder)/f'{filename}.png'
+    path.parent.mkdir(exist_ok=True,parents=True)
+
+    img=Image.open(io.BytesIO(await uploadimage.read()))
+    image_width=236
+    image_height=382
+    new_size=(image_width,image_height)
+    resized_image=img.resize(size=new_size)
+    resized_image.save(path,'PNG')
+    return filename+'.png'
+@router.delete('/delete-book/{book_id}')
+async def delete_book(request:Request,book_id:int,db:db_dependency):
+    try:
+        jwttoken=request.cookies.get('access_token')
+        user=get_current_user(jwttoken)
+        uploader_id=int(db.query(Books.uploader_id).filter(Books.id==book_id).scalar())
+        uploader_details=db.query(Users).filter(Users.id==uploader_id).first()
+        if uploader_details.username==user.get('username') or uploader_details.role=='admin':
+            book_model=db.query(Books).filter(Books.id==book_id).first()
+            db.delete(book_model)
+            db.commit()
+
+            return {'message':f'book deleted :{book_model.bookname}' }
+        elif user is None or uploader_details is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='user not authorized..')
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail='some error occurred')
 
 # INSERT INTO books (bookname, author, price, genre,summary,uploader_id) VALUES ('brain', 'robin cook', 500,'horror','brains in a hospital go missing',2);
 # INSERT INTO books (bookname, author, price, genre,summary,uploader_id) VALUES ('one shot', 'lee child', 600,'crime thriller','4 people are shot by an unknown sniper',2);

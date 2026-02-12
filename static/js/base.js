@@ -113,6 +113,32 @@ if(adminButton){
     });
 }
 
+var addBookForm=document.getElementById('addBookForm');
+if(addBookForm){
+    addBookForm.addEventListener('submit',async function(event){
+        event.preventDefault();
+
+        const form=event.target;
+        const formData=new FormData(form);
+
+    try{
+        ('Trying..')
+        //const response=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const response=await fetch('/lib/add-book',{method:'POST',body:formData});
+        if(response.ok){
+            window.location.href='/lib/admin-actions';
+        }
+        else{
+            const errordata=response.json();
+            alert(`error:${errordata.message}`);
+        }
+    }
+    catch(error){
+        console.log('error:',error);
+        alert('an error occurred, please try again');
+    }
+    });
+}
 
 var logoutButton=document.getElementById('logoutButton');
 if(logoutButton){
@@ -122,6 +148,34 @@ if(logoutButton){
     });
 }
 
+var deleteBookButtons=document.getElementsByClassName('deleteBookButtons');
+if(deleteBookButtons){
+   for(let i=0;i<deleteBookButtons.length;i++){
+        deleteBookButtons[i].addEventListener('click', async function(event){
+            event.preventDefault();
+            if(!confirm('Are you sure you want to delete this book?')){
+                return;
+            }
+            else{
+                token=getCookie('access_token');
+                //initiate delete request
+                const response= await fetch(
+                `/lib/delete-book/${deleteBookButtons[i].value}`,
+                {
+                    method:'DELETE',
+                    headers:{
+                        'Authorization':`Bearer${token}`
+                    }
+
+                }
+                );
+                if(response.ok){
+                    window.location.href='/lib/show-books'
+                }
+            }
+        });
+    }
+}
 
 function logout(){
     const cookies = document.cookie.split(";");
@@ -151,4 +205,18 @@ function deleteAllCookies(){
             document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
         }
 
+}
+
+function getCookie(name){
+    if(document.cookie && document.cookie !==''){
+        cookies=document.cookie.split(';')
+        for(let i=0;i<cookies.length;i++){
+            cookies[i]=cookies[i].trim();
+            nameAndValue=cookies[i].split('=');
+            if(name===nameAndValue[0]){
+                //console.log(nameAndValue[1]);
+                return nameAndValue[1]
+            }
+        }
+    }
 }
