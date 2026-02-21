@@ -1,6 +1,6 @@
 import os
 from tokenize import cookie_re
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Request,APIRouter,status,HTTPException,Form,UploadFile,File
 from fastapi.params import Depends
@@ -130,7 +130,8 @@ async def add_a_book_page(request:Request):
         user = get_current_user(request.cookies.get('access_token'))
         if user is None:
             return redirect_to_login()
-        return templates.TemplateResponse('add-book.html',{'request':request})
+        print('all ok')
+        return templates.TemplateResponse('add-book.html',{'request':request,'user':user})
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Could not verify')
 
@@ -179,6 +180,8 @@ async def write_image_to_path(bookname:str,author:str,uploadimage:UploadFile):
     path=Path(folder)/f'{filename}.png'
     path.parent.mkdir(exist_ok=True,parents=True)
 
+    if os.path.exists(path):
+        os.remove(path)
     img=Image.open(io.BytesIO(await uploadimage.read()))
     image_width=236
     image_height=382
@@ -197,12 +200,61 @@ async def delete_book(request:Request,book_id:int,db:db_dependency):
             book_model=db.query(Books).filter(Books.id==book_id).first()
             db.delete(book_model)
             db.commit()
-
             return {'message':f'book deleted :{book_model.bookname}' }
         elif user is None or uploader_details is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='user not authorized..')
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail='some error occurred')
 
+@router.get('/update-book-page/{book_id}')
+async def update_book_page(book_id:int,request:Request,db:db_dependency):
+    try:
+        jwttoken=request.cookies.get('access_token')
+        user=get_current_user(jwttoken)
+        uploader_id = int(db.query(Books.uploader_id).filter(Books.id == book_id).scalar())
+        uploader_details = db.query(Users).filter(Users.id == uploader_id).first()
+        if uploader_details.username == user.get('username') or user.get('role') == 'admin':
+            book_model = db.query(Books).filter(Books.id == book_id).first()
+            return templates.TemplateResponse('update-book-page.html',{'request':request,'book':book_model,'user':user})
+        elif user is None or uploader_details is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='user not authorized..')
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail='some error occurred')
+
+@router.post('/update-book-request')
+async def update_book(bookname:Annotated[str,Form(...)],
+                      author:Annotated[str,Form(...)],
+                      genre:Annotated[str,Form(...)],
+                      summary:Annotated[str,Form(...)],
+                      price:Annotated[int,Form(...)],
+                      bookimage:Optional[UploadFile]=None,
+                      request:Request=None,db:db_dependency=None):
+    print(bookimage)
+    print(type(bookimage.size))
+    print(type(bookimage.filename))
+    user=get_current_user(request.cookies.get('access_token'))
+    book_model=db.query(Books).filter(Books.bookname==bookname).filter(Books.author==author).first()
+    if bookimage.size ==0 or bookimage.filename=='' or bookimage==None:
+        if user.get('role') == 'admin' or int(user.get('id')) == book_model.uploader_id:
+            book_model.bookname=bookname
+            book_model.author=author
+            book_model.genre=genre
+            book_model.summary=summary
+            book_model.price=price
+            db.add(book_model)
+            db.commit()
+            return 'Book updated without image'
+    elif bookimage.size >0 and len(bookimage.filename)>0 and bookimage is not None:
+        if user.get('role') == 'admin' or int(user.get('id')) == book_model.uploader_id:
+            book_model.bookname = bookname
+            book_model.author = author
+            book_model.genre = genre
+            book_model.summary = summary
+            book_model.price = price
+            hashed_book_imagename=await write_image_to_path(bookname,author,bookimage)
+            book_model.image_url=str(hashed_book_imagename)
+            db.add(book_model)
+            db.commit()
+            return 'book updated with image..'
 # INSERT INTO books (bookname, author, price, genre,summary,uploader_id) VALUES ('brain', 'robin cook', 500,'horror','brains in a hospital go missing',2);
 # INSERT INTO books (bookname, author, price, genre,summary,uploader_id) VALUES ('one shot', 'lee child', 600,'crime thriller','4 people are shot by an unknown sniper',2);

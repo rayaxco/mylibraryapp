@@ -170,12 +170,34 @@ if(deleteBookButtons){
                 }
                 );
                 if(response.ok){
-                    window.location.href='/lib/show-books'
+                    window.location.href='/lib/show-books';
+                }
+                else{
+
+                    window.location.href='/auth/login';
                 }
             }
         });
     }
 }
+
+var editBookButtons=document.getElementsByClassName('editBookButtons');
+if(editBookButtons){
+   for(let i=0;i<editBookButtons.length;i++){
+        editBookButtons[i].addEventListener('click', async function(event){
+            event.preventDefault();
+
+            token=getCookie('access_token');
+            console.log(editBookButtons[i].value);
+            //initiate delete request
+            book_id=editBookButtons[i].value
+            window.location.href='/lib/update-book-page/'+book_id;
+
+    });
+    }
+}
+
+
 
 function logout(){
     const cookies = document.cookie.split(";");
@@ -219,4 +241,32 @@ function getCookie(name){
             }
         }
     }
+}
+
+var updateBookForm=document.getElementById('updateBookForm');
+if(updateBookForm){
+    updateBookForm.addEventListener('submit',async function(event){
+        event.preventDefault();
+
+        var coverImage=document.getElementById('bookImg');
+        const form=event.target;
+        const formData=new FormData(form);
+
+    try{
+        ('sending update request...')
+        //const response=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const response=await fetch('/lib/update-book-request',{method:'POST',body:formData});
+        if(response.ok){
+            window.location.href='/lib/show-books';
+        }
+        else{
+            const errordata=response.json();
+            alert(`error:${errordata.message}`);
+        }
+    }
+    catch(error){
+        console.log('error:',error);
+        alert('an error occurred, please try again');
+    }
+    });
 }

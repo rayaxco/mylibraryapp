@@ -1,0 +1,37 @@
+{%include 'layout.html'%}
+<div class="container">
+  <form id="updateBookForm" enctype="multipart/form-data">
+    <label>Book Name:</label>
+    <input type="text" name="bookname" value="{{book.bookname}}" required><br>
+
+    <label>Author:</label>
+    <input type="text" name="author" value="{{book.author}}" required><br>
+
+    <label>Genre:</label>
+    <input type="text" name="genre" value="{{book.genre}}" required><br>
+
+    <label>Price:</label>
+    <input type="number" name="price" value="{{book.price}}" step="1" pattern="\\d*" required><br>
+
+    <label>Summary:</label><br>
+    <textarea rows="5" cols="50" name="summary">{{book.summary}}</textarea><br>
+      <label>Image to Upload</label><br>
+    <img src="{{url_for('static',path='/images/'+book.image_url)}}" id="bookImg" name="bookimg"><br>
+    <input type="file" name="bookimage"  accept="image/*" id="imgFile" ><br><br>
+
+    <button type="submit">update book</button><br>
+  </form>
+  <script>
+    var coverImage=document.getElementById('bookImg');
+    var imgFile=document.getElementById('imgFile');
+      if(imgFile){
+        imgFile.addEventListener('change',async function(event){
+        const file=event.target.files[0];
+        const objectURL=URL.createObjectURL(file);
+        console.log(objectURL);
+        coverImage.src=objectURL;
+        console.log('upload file button has been pressed');
+      });
+    }
+  </script>
+</div>
