@@ -233,6 +233,8 @@ async def update_book(bookname:Annotated[str,Form(...)],
     print(type(bookimage.size))
     print(type(bookimage.filename))
     user=get_current_user(request.cookies.get('access_token'))
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='expired token..')
     book_model=db.query(Books).filter(Books.bookname==bookname).filter(Books.author==author).first()
     if bookimage.size ==0 or bookimage.filename=='' or bookimage==None:
         if user.get('role') == 'admin' or int(user.get('id')) == book_model.uploader_id:
@@ -256,5 +258,16 @@ async def update_book(bookname:Annotated[str,Form(...)],
             db.add(book_model)
             db.commit()
             return 'book updated with image..'
+
+
+@router.get('/edit-user-page')
+async def edit_user_page(request:Request):
+    user=get_current_user(request.cookies.get('access_token'))
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='token invalid')
+    return templates.TemplateResponse('edit-user-page.html',{'request':request,'user':user})
+
+
+
 # INSERT INTO books (bookname, author, price, genre,summary,uploader_id) VALUES ('brain', 'robin cook', 500,'horror','brains in a hospital go missing',2);
 # INSERT INTO books (bookname, author, price, genre,summary,uploader_id) VALUES ('one shot', 'lee child', 600,'crime thriller','4 people are shot by an unknown sniper',2);
